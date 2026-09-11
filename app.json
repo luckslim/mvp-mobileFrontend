@@ -1,0 +1,11 @@
+{
+  "name": "mobile",
+  "slug": "mobile",
+  "userInterfaceStyle": "automatic",
+  "plugins": [
+    "expo-secure-store"
+  ],
+  "web": {
+    "bundler": "metro"
+  }
+}

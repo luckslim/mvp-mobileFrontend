@@ -1,0 +1,16 @@
+import './global.css';
+import { PortalHost } from '@rn-primitives/portal';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from './src/auth/AuthContext';
+import { AppNavigator } from './src/navigation/AppNavigator';
+
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppNavigator />
+        <PortalHost />
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}
