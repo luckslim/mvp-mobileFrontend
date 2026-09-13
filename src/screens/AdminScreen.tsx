@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Text } from '@/components/ui/text';
-import { colors } from '../theme';
 import type { TouristPlace } from '../types';
 import type { ScreenProps } from '../navigation/types';
 

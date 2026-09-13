@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,22 +18,106 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
+import { useAuth } from "../auth/AuthContext";
 import type { ScreenProps } from "../navigation/types";
 import { colors } from "../theme";
 import type { UserRole } from "../types";
+
+const bodyValidationSchema = z.object({
+  email: z.email("Informe um e-mail válido."),
+  password: z.string().min(8, "A senha deve ter pelo menos 8 caracteres."),
+});
+
+type BodyValidationSchema = z.infer<typeof bodyValidationSchema>;
 
 type LoginProps = ScreenProps<"Login">;
 
 export function LoginScreen({ navigation, route }: LoginProps) {
   const role: UserRole = route.params?.role ?? "user";
   const isAdmin = role === "admin";
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [errorState, SetErrorState] = useState<string | null>(null);
+  const [messageState, SetMessageState] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading] = useState(false);
+  const { signIn, session } = useAuth();
 
-  async function handleSubmit() {
-    return;
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<BodyValidationSchema>({
+    resolver: zodResolver(bodyValidationSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  async function handleLogin({ email, password }: BodyValidationSchema) {
+    try {
+      SetErrorState(null);
+      SetMessageState(null);
+      const response = await fetch(
+        "https://mvp-mageverde.onrender.com/authenticate/user",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        },
+      );
+
+      const rawBody = await response.text();
+      console.log("Resposta do login:", rawBody);
+
+      let payload: Record<string, unknown> | null = null;
+
+      try {
+        payload = rawBody
+          ? (JSON.parse(rawBody) as Record<string, unknown>)
+          : null;
+      } catch {
+        payload = null;
+      }
+
+      const token =
+        typeof payload?.access_Token === "string"
+          ? payload.access_Token
+          : typeof payload?.accessToken === "string"
+            ? payload.accessToken
+            : typeof payload?.token === "string"
+              ? payload.token
+              : typeof payload?.jwt === "string"
+                ? payload.jwt
+                : null;
+
+      console.log("JWT recebido:", token);
+
+      if (!response.ok) {
+        const message =
+          (payload?.message as string | undefined) ??
+          (payload?.error as string | undefined) ??
+          "E-mail ou senha inválidos.";
+
+        SetErrorState(message);
+        return;
+      }
+
+      if (!token) {
+        SetErrorState("Resposta do servidor não contém um token válido.");
+        return;
+      }
+
+      await signIn(email, password, role, token);
+      SetMessageState("Login realizado com sucesso!");
+    } catch (error) {
+      console.log("ERRO:", error);
+      SetErrorState("Não foi possível conectar com o servidor.");
+    }
   }
 
   return (
@@ -97,6 +184,20 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                     : "Acesse sua conta para explorar os lugares turísticos de Magé."}
                 </Text>
 
+                {errorState ? (
+                  <View className="mt-5 rounded-md border border-red-200 bg-red-50 px-3 py-2">
+                    <Text className="text-sm text-red-600">{errorState}</Text>
+                  </View>
+                ) : null}
+
+                {messageState ? (
+                  <View className="mt-5 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2">
+                    <Text className="text-sm text-emerald-700">
+                      {messageState}
+                    </Text>
+                  </View>
+                ) : null}
+
                 <View className="mt-5 gap-2">
                   <Label nativeID="email-label">E-mail</Label>
                   <Input
@@ -106,11 +207,18 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                     autoCorrect={false}
                     className="h-14 bg-background px-4 text-base"
                     keyboardType="email-address"
-                    onChangeText={setEmail}
                     placeholder="voce@exemplo.com"
                     textContentType="emailAddress"
-                    value={email}
+                    {...register("email")}
+                    onChangeText={(value) =>
+                      setValue("email", value, { shouldValidate: true })
+                    }
                   />
+                  {errors.email ? (
+                    <Text className="text-sm text-red-500">
+                      {errors.email.message}
+                    </Text>
+                  ) : null}
                 </View>
 
                 <View className="mt-5 gap-2">
@@ -122,11 +230,13 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                       autoComplete="password"
                       autoCorrect={false}
                       className="h-14 flex-1 border-0 bg-transparent px-4 text-base shadow-none"
-                      onChangeText={setPassword}
                       placeholder="Sua senha"
                       secureTextEntry={!showPassword}
                       textContentType="password"
-                      value={password}
+                      {...register("password")}
+                      onChangeText={(value) =>
+                        setValue("password", value, { shouldValidate: true })
+                      }
                     />
                     <Button
                       accessibilityLabel={
@@ -140,15 +250,20 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                       <Text>{showPassword ? "ocultar" : "mostrar"}</Text>
                     </Button>
                   </View>
+                  {errors.password ? (
+                    <Text className="text-sm text-red-500">
+                      {errors.password.message}
+                    </Text>
+                  ) : null}
                 </View>
 
                 <Button
                   className="mt-6 h-14"
-                  disabled={isLoading}
-                  onPress={() => void handleSubmit()}
+                  disabled={isSubmitting}
+                  onPress={() => void handleSubmit(handleLogin)()}
                   variant="secondary"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <ActivityIndicator color={colors.forest} />
                   ) : (
                     <Text>Entrar na conta</Text>

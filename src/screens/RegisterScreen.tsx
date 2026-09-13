@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { Text } from "@/components/ui/text";
 import { colors } from "../theme";
 import type { ScreenProps } from "../navigation/types";
-import { Axios } from "../utils/axios";
 
 const bodyValidationSchema = z
   .object({
@@ -57,47 +56,45 @@ export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
     email,
     password,
   }: BodyValidationSchema) {
-try {
-    SetErrorState(null);
-    SetMessageState(null);
+    try {
+      SetErrorState(null);
+      SetMessageState(null);
 
-    console.log("Enviando:", name, email, password);
+      console.log("Enviando:", name, email, password);
 
-    const response = await fetch(
-      "https://mvp-mageverde.onrender.com/create/user",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://mvp-mageverde.onrender.com/create/user",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            email,
+            password,
+          }),
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-        }),
-      },
-    );
+      );
 
-    console.log("Status:", response.status);
+      console.log("Status:", response.status);
 
-    if (!response.ok) {
-      const text = await response.text();
+      if (!response.ok) {
+        const text = await response.text();
 
-      console.log("Erro:", text);
+        console.log("Erro:", text);
 
-      SetErrorState("Não foi possível realizar o cadastro.");
-      return;
+        SetErrorState("Não foi possível realizar o cadastro.");
+        return;
+      }
+
+      SetMessageState("Registrado com sucesso!");
+      SetErrorState(null);
+    } catch (error) {
+      console.log("ERRO:", error);
+
+      SetErrorState("Não foi possível conectar com o servidor.");
     }
-
-    SetMessageState("Registrado com sucesso!");
-    SetErrorState(null);
-  } catch (error) {
-    console.log("ERRO:", error);
-
-    SetErrorState(
-      "Não foi possível conectar com o servidor.",
-    );
-  }
   }
 
   return (

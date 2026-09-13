@@ -1,9 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { Platform } from 'react-native';
-import type { Session, UserRole } from '../types';
+import * as SecureStore from "expo-secure-store";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
+import type { Session, UserRole } from "../types";
 
-const SESSION_KEY = 'mage-verde-session-v2';
+const SESSION_KEY = "mage-verde-session-v2";
 
 type WebStorage = {
   getItem(key: string): string | null;
@@ -12,12 +12,13 @@ type WebStorage = {
 };
 
 function getWebStorage() {
-  return (globalThis as typeof globalThis & { localStorage?: WebStorage }).localStorage;
+  return (globalThis as typeof globalThis & { localStorage?: WebStorage })
+    .localStorage;
 }
 
 async function readSession() {
   const raw =
-    Platform.OS === 'web'
+    Platform.OS === "web"
       ? getWebStorage()?.getItem(SESSION_KEY)
       : await SecureStore.getItemAsync(SESSION_KEY);
 
@@ -35,7 +36,7 @@ async function readSession() {
 async function writeSession(session: Session) {
   const raw = JSON.stringify(session);
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     getWebStorage()?.setItem(SESSION_KEY, raw);
     return;
   }
@@ -44,7 +45,7 @@ async function writeSession(session: Session) {
 }
 
 async function removeSession() {
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     getWebStorage()?.removeItem(SESSION_KEY);
     return;
   }
@@ -54,8 +55,14 @@ async function removeSession() {
 
 type AuthContextValue = {
   session: Session | null;
+  token: string | null;
   isLoading: boolean;
-  signIn(email: string, password: string, role: UserRole): Promise<void>;
+  signIn(
+    email: string,
+    password: string,
+    role: UserRole,
+    token: string,
+  ): Promise<void>;
   signOut(): Promise<void>;
 };
 
@@ -71,9 +78,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  async function signIn(_email: string, _password: string, role: UserRole) {
+  async function signIn(
+    _email: string,
+    _password: string,
+    role: UserRole,
+    token: string,
+  ) {
     const nextSession: Session = {
-      token: '',
+      token,
       role,
     };
 
@@ -87,7 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = useMemo(
-    () => ({ session, isLoading, signIn, signOut }),
+    () => ({
+      session,
+      token: session?.token ?? null,
+      isLoading,
+      signIn,
+      signOut,
+    }),
     [isLoading, session],
   );
 
@@ -98,7 +116,7 @@ export function useAuth() {
   const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error('useAuth precisa ser usado dentro de AuthProvider.');
+    throw new Error("useAuth precisa ser usado dentro de AuthProvider.");
   }
 
   return context;
