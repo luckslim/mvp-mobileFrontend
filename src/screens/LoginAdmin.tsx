@@ -34,7 +34,6 @@ type LoginAdminProps = ScreenProps<"LoginAdmin">;
 
 export function LoginAdminScreen({ navigation }: LoginAdminProps) {
   const role: UserRole = "admin";
-  const isAdmin = true;
   const [errorState, SetErrorState] = useState<string | null>(null);
   const [messageState, SetMessageState] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -114,6 +113,7 @@ export function LoginAdminScreen({ navigation }: LoginAdminProps) {
 
       await signIn(email, password, role, token);
       SetMessageState("Login realizado com sucesso!");
+      navigation.navigate("Admin");
     } catch (error) {
       console.log("ERRO:", error);
       SetErrorState("Não foi possível conectar com o servidor.");
@@ -157,17 +157,14 @@ export function LoginAdminScreen({ navigation }: LoginAdminProps) {
 
               <View className="mt-9">
                 <Text className="text-sm font-semibold text-secondary">
-                  {isAdmin ? "Área de administração" : "Descubra Magé"}
+                  Área de administração
                 </Text>
                 <Text className="mt-2 max-w-[370px] text-4xl font-extrabold leading-10 tracking-tight text-primary-foreground">
-                  {isAdmin
-                    ? "Cuide dos lugares que fazem Magé especial."
-                    : "Conheça os lugares que fazem Magé especial."}
+                  Cuide dos lugares que fazem Magé especial.
                 </Text>
                 <Text className="mt-4 max-w-[370px] text-base leading-6 text-primary-foreground/75">
-                  {isAdmin
-                    ? "Entre para revisar, publicar e organizar os lugares cadastrados."
-                    : "Entre para descobrir trilhas, cachoeiras e pontos turísticos perto de você."}
+                  Entre para revisar, publicar e organizar os lugares
+                  cadastrados.
                 </Text>
               </View>
             </View>
@@ -176,12 +173,10 @@ export function LoginAdminScreen({ navigation }: LoginAdminProps) {
               <CardContent className="px-6 pb-7 pt-7">
                 <View className="mb-6 h-1.5 w-11 rounded-full bg-secondary" />
                 <Text className="text-2xl font-extrabold tracking-tight">
-                  {isAdmin ? "Entrar como administrador" : "Conheça Magé"}
+                  Entrar como administrador
                 </Text>
                 <Text className="mt-2 leading-6 text-muted-foreground">
-                  {isAdmin
-                    ? "Use o acesso administrativo disponibilizado pelo projeto."
-                    : "Acesse sua conta para Gerenciar os lugares turísticos de Magé."}
+                  Use o acesso administrativo disponibilizado pelo projeto.
                 </Text>
 
                 {errorState ? (
@@ -269,22 +264,6 @@ export function LoginAdminScreen({ navigation }: LoginAdminProps) {
                     <Text>Entrar na conta</Text>
                   )}
                 </Button>
-
-                {!isAdmin ? (
-                  <>
-                    <View className="my-6 flex-row items-center gap-3">
-                      <Separator className="flex-1" />
-                      <Text className="text-sm text-muted-foreground">ou</Text>
-                      <Separator className="flex-1" />
-                    </View>
-                    <Button
-                      onPress={() => navigation.navigate("Register")}
-                      variant="outline"
-                    >
-                      <Text>Criar uma conta</Text>
-                    </Button>
-                  </>
-                ) : null}
 
                 <Button
                   className="mt-5 self-center"

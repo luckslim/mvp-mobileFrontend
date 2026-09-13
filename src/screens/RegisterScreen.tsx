@@ -241,7 +241,7 @@ export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
 
             <Button
               className="mt-5 self-center"
-              onPress={() => navigation.replace("Login", { role: "user" })}
+              onPress={() => navigation.navigate("Login", { role: "user" })}
               variant="link"
             >
               <Text>Já tenho uma conta</Text>
