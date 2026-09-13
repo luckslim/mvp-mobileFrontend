@@ -1,6 +1,6 @@
-export type UserRole = 'user' | 'admin';
+export type UserRole = "user" | "admin";
 
-export type PlaceStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+export type PlaceStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export type TouristPlace = {
   id: string;
@@ -21,6 +21,7 @@ export type Session = {
 
 export type RootStackParamList = {
   Login: { role?: UserRole } | undefined;
+  LoginAdmin: undefined;
   Register: undefined;
   Places: undefined;
   PlaceDetails: { place: TouristPlace };

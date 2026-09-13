@@ -30,11 +30,11 @@ const bodyValidationSchema = z.object({
 
 type BodyValidationSchema = z.infer<typeof bodyValidationSchema>;
 
-type LoginProps = ScreenProps<"Login">;
+type LoginAdminProps = ScreenProps<"LoginAdmin">;
 
-export function LoginScreen({ navigation }: LoginProps) {
-  const role: UserRole = "user";
-  const isAdmin = false;
+export function LoginAdminScreen({ navigation }: LoginAdminProps) {
+  const role: UserRole = "admin";
+  const isAdmin = true;
   const [errorState, SetErrorState] = useState<string | null>(null);
   const [messageState, SetMessageState] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -58,7 +58,7 @@ export function LoginScreen({ navigation }: LoginProps) {
       SetErrorState(null);
       SetMessageState(null);
       const response = await fetch(
-        "https://mvp-mageverde.onrender.com/authenticate/user",
+        "https://mvp-mageverde.onrender.com/authenticate/admin",
         {
           method: "POST",
           headers: {
@@ -181,7 +181,7 @@ export function LoginScreen({ navigation }: LoginProps) {
                 <Text className="mt-2 leading-6 text-muted-foreground">
                   {isAdmin
                     ? "Use o acesso administrativo disponibilizado pelo projeto."
-                    : "Acesse sua conta para explorar os lugares turísticos de Magé."}
+                    : "Acesse sua conta para Gerenciar os lugares turísticos de Magé."}
                 </Text>
 
                 {errorState ? (
@@ -288,10 +288,10 @@ export function LoginScreen({ navigation }: LoginProps) {
 
                 <Button
                   className="mt-5 self-center"
-                  onPress={() => navigation.navigate("LoginAdmin")}
+                  onPress={() => navigation.navigate("Login")}
                   variant="link"
                 >
-                  <Text>Acesso para admin</Text>
+                  <Text>acesso de usuários</Text>
                 </Button>
               </CardContent>
             </Card>

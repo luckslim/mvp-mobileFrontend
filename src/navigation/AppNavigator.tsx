@@ -1,15 +1,16 @@
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useAuth } from '../auth/AuthContext';
-import { colors } from '../theme';
-import type { RootStackParamList } from '../types';
-import { AdminScreen } from '../screens/AdminScreen';
-import { CreatePlaceScreen } from '../screens/CreateEventScreen';
-import { PlaceDetailsScreen } from '../screens/EventDetailsScreen';
-import { PlacesScreen } from '../screens/EventsScreen';
-import { LoginScreen } from '../screens/LoginScreen';
-import { RegisterScreen } from '../screens/RegisterScreen';
+import { NavigationContainer } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useAuth } from "../auth/AuthContext";
+import { colors } from "../theme";
+import type { RootStackParamList } from "../types";
+import { AdminScreen } from "../screens/AdminScreen";
+import { CreatePlaceScreen } from "../screens/CreateEventScreen";
+import { PlaceDetailsScreen } from "../screens/EventDetailsScreen";
+import { PlacesScreen } from "../screens/EventsScreen";
+import { LoginAdminScreen } from "../screens/LoginAdmin";
+import { LoginScreen } from "../screens/LoginScreen";
+import { RegisterScreen } from "../screens/RegisterScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -29,9 +30,9 @@ export function AppNavigator() {
       <Stack.Navigator
         screenOptions={{
           contentStyle: { backgroundColor: colors.paper },
-          headerBackTitle: 'Voltar',
+          headerBackTitle: "Voltar",
           headerTintColor: colors.forest,
-          headerTitleStyle: { color: colors.ink, fontWeight: '700' },
+          headerTitleStyle: { color: colors.ink, fontWeight: "700" },
         }}
       >
         {session ? (
@@ -44,18 +45,18 @@ export function AppNavigator() {
             <Stack.Screen
               name="PlaceDetails"
               component={PlaceDetailsScreen}
-              options={{ title: 'Detalhes do lugar' }}
+              options={{ title: "Detalhes do lugar" }}
             />
             <Stack.Screen
               name="CreatePlace"
               component={CreatePlaceScreen}
               options={{ headerShown: false }}
             />
-            {session.role === 'admin' ? (
+            {session.role === "admin" ? (
               <Stack.Screen
                 name="Admin"
                 component={AdminScreen}
-                options={{ title: 'Moderação' }}
+                options={{ title: "Moderação" }}
               />
             ) : null}
           </>
@@ -67,9 +68,14 @@ export function AppNavigator() {
               options={{ headerShown: false }}
             />
             <Stack.Screen
+              name="LoginAdmin"
+              component={LoginAdminScreen}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
               name="Register"
               component={RegisterScreen}
-              options={{ title: 'Criar conta' }}
+              options={{ title: "Criar conta" }}
             />
           </>
         )}
@@ -80,9 +86,9 @@ export function AppNavigator() {
 
 const styles = StyleSheet.create({
   loading: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: colors.paper,
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });
