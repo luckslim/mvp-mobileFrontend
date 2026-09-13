@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import * as ImagePicker from 'expo-image-picker';
 import {
   ActivityIndicator,
   Image,
@@ -10,80 +9,34 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Camera, CheckCircle2, CircleAlert, MapPin, Send, Sparkles } from 'lucide-react-native';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ArrowLeft, Camera, MapPin, Send, Sparkles } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
-import { useAuth } from '../auth/AuthContext';
-import { createTouristPlace } from '../lib/api';
 import { colors } from '../theme';
 import type { ScreenProps } from '../navigation/types';
 
 export function CreatePlaceScreen({ navigation }: ScreenProps<'CreatePlace'>) {
-  const { session } = useAuth();
   const [name, setName] = useState('');
   const [suggestedVisitTime, setSuggestedVisitTime] = useState('');
   const [location, setLocation] = useState('');
   const [responsibleParty, setResponsibleParty] = useState('');
   const [description, setDescription] = useState('');
-  const [image, setImage] = useState<{ uri: string; name: string; mimeType: string; file?: Blob } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: 'error' | 'success'; text: string } | null>(null);
+  const [image, setImage] = useState<{ uri: string; name: string; mimeType: string } | null>(null);
+  const [isLoading] = useState(false);
 
   async function chooseImage() {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (result.canceled || !result.assets[0]) return;
-    const asset = result.assets[0];
     setImage({
-      file: asset.file,
-      mimeType: asset.mimeType ?? 'image/jpeg',
-      name: asset.fileName ?? 'lugar.jpg',
-      uri: asset.uri,
+      mimeType: 'image/jpeg',
+      name: 'foto.jpg',
+      uri: '',
     });
   }
 
   async function handleSubmit() {
-    setFeedback(null);
-    if (!name.trim() || !suggestedVisitTime.trim() || !location.trim() || !description.trim()) {
-      setFeedback({ kind: 'error', text: 'Preencha nome, localização, horário sugerido e descrição.' });
-      return;
-    }
-    if (!image) {
-      setFeedback({ kind: 'error', text: 'Escolha uma foto para apresentar o lugar.' });
-      return;
-    }
-    if (!session) {
-      setFeedback({ kind: 'error', text: 'Sua sessão expirou. Entre novamente para cadastrar.' });
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      await createTouristPlace(session.token, {
-        description: description.trim(),
-        image,
-        location: location.trim(),
-        name: name.trim(),
-        responsibleParty: responsibleParty.trim() || 'Comunidade Magé Verde',
-        suggestedVisitTime: suggestedVisitTime.trim(),
-      });
-      setFeedback({
-        kind: 'success',
-        text: session.role === 'admin' ? 'Lugar publicado no guia.' : 'Lugar enviado para análise. Ele aparecerá após a aprovação.',
-      });
-      setTimeout(() => navigation.goBack(), 900);
-    } catch (error) {
-      setFeedback({ kind: 'error', text: error instanceof Error ? error.message : 'Não foi possível cadastrar o lugar.' });
-    } finally {
-      setIsLoading(false);
-    }
+    return;
   }
 
   return (
@@ -126,12 +79,6 @@ export function CreatePlaceScreen({ navigation }: ScreenProps<'CreatePlace'>) {
                       <Text className="mt-0.5 text-sm text-muted-foreground">Preencha o que um visitante precisa saber.</Text>
                     </View>
                   </View>
-
-                  {feedback ? (
-                    <Alert icon={feedback.kind === 'error' ? CircleAlert : CheckCircle2} variant={feedback.kind === 'error' ? 'destructive' : 'default'}>
-                      <AlertDescription>{feedback.text}</AlertDescription>
-                    </Alert>
-                  ) : null}
 
                   <View className="gap-2">
                     <Label>Foto principal</Label>
@@ -187,7 +134,7 @@ export function CreatePlaceScreen({ navigation }: ScreenProps<'CreatePlace'>) {
                   />
 
                   <View className="mt-1 gap-3">
-                    <Button className="h-14 rounded-2xl" disabled={isLoading} onPress={handleSubmit} variant="secondary">
+                    <Button className="h-14 rounded-2xl" disabled={isLoading} onPress={() => void handleSubmit()} variant="secondary">
                       {isLoading ? <ActivityIndicator color={colors.forest} /> : <Send color={colors.forest} size={17} />}
                       <Text>Enviar lugar</Text>
                     </Button>

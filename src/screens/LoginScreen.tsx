@@ -8,8 +8,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { CircleAlert, Compass, MapPin } from 'lucide-react-native';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Compass, MapPin } from 'lucide-react-native';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,42 +16,21 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Text } from '@/components/ui/text';
 import type { ScreenProps } from '../navigation/types';
-import { useAuth } from '../auth/AuthContext';
-import { getLoginErrorMessage } from '../lib/login-errors';
 import { colors } from '../theme';
 import type { UserRole } from '../types';
 
 type LoginProps = ScreenProps<'Login'>;
 
 export function LoginScreen({ navigation, route }: LoginProps) {
-  const { signIn } = useAuth();
   const role: UserRole = route.params?.role ?? 'user';
   const isAdmin = role === 'admin';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [isLoading] = useState(false);
 
   async function handleSubmit() {
-    const normalizedEmail = email.trim();
-    setFeedback(null);
-    if (!normalizedEmail || !normalizedEmail.includes('@')) {
-      setFeedback('Digite um e-mail válido para continuar.');
-      return;
-    }
-    if (!password) {
-      setFeedback('Digite sua senha para continuar.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await signIn(normalizedEmail, password, role);
-    } catch (error) {
-      setFeedback(getLoginErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-    }
+    return;
   }
 
   return (
@@ -106,12 +84,6 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                     : 'Acesse sua conta para explorar os lugares turísticos de Magé.'}
                 </Text>
 
-                {feedback ? (
-                  <Alert className="mt-5" icon={CircleAlert} variant="destructive">
-                    <AlertDescription>{feedback}</AlertDescription>
-                  </Alert>
-                ) : null}
-
                 <View className="mt-5 gap-2">
                   <Label nativeID="email-label">E-mail</Label>
                   <Input
@@ -155,7 +127,7 @@ export function LoginScreen({ navigation, route }: LoginProps) {
                   </View>
                 </View>
 
-                <Button className="mt-6 h-14" disabled={isLoading} onPress={handleSubmit} variant="secondary">
+                <Button className="mt-6 h-14" disabled={isLoading} onPress={() => void handleSubmit()} variant="secondary">
                   {isLoading ? <ActivityIndicator color={colors.forest} /> : <Text>Entrar na conta</Text>}
                 </Button>
 

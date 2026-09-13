@@ -1,7 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
-import { authenticate } from '../lib/api';
 import type { Session, UserRole } from '../types';
 
 const SESSION_KEY = 'mage-verde-session-v2';
@@ -72,11 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setIsLoading(false));
   }, []);
 
-  async function signIn(email: string, password: string, role: UserRole) {
-    const response = await authenticate(role, email, password);
+  async function signIn(_email: string, _password: string, role: UserRole) {
     const nextSession: Session = {
-      token: response.access_Token,
-      role: response.role ?? role,
+      token: '',
+      role,
     };
 
     await writeSession(nextSession);

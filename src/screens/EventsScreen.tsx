@@ -1,25 +1,12 @@
-import { useCallback, useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Image,
-  RefreshControl,
-  StatusBar,
-  View,
-} from 'react-native';
+import { FlatList, Image, StatusBar, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { ArrowUpRight, Clock3, Compass, LogOut, MapPin, Plus, RefreshCw } from 'lucide-react-native';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Text } from '@/components/ui/text';
-import { ModerationBanner } from '../components/ModerationBanner';
 import { useAuth } from '../auth/AuthContext';
-import { deleteTouristPlace, getAdminTouristPlaces, getMyTouristPlaces, getTouristPlaces } from '../lib/api';
 import { colors } from '../theme';
-import type { PlaceStatus, TouristPlace } from '../types';
+import type { TouristPlace } from '../types';
 import type { ScreenProps } from '../navigation/types';
 
 function formatSuggestedTime(time?: string | null) {
@@ -86,51 +73,9 @@ function PlaceCard({ place, onPress }: { place: TouristPlace; onPress: () => voi
 
 export function PlacesScreen({ navigation }: ScreenProps<'Places'>) {
   const { session, signOut } = useAuth();
-  const [places, setPlaces] = useState<TouristPlace[]>([]);
-  const [myPlaces, setMyPlaces] = useState<TouristPlace[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<TouristPlace | null>(null);
-
-  const loadPlaces = useCallback(async (refresh = false) => {
-    if (!session) return;
-    refresh ? setIsRefreshing(true) : setIsLoading(true);
-    setError(null);
-    try {
-      const [publicPlaces, ownPlaces, adminSummary] = await Promise.all([
-        getTouristPlaces(session.token),
-        getMyTouristPlaces(session.token),
-        session.role === 'admin' ? getAdminTouristPlaces(session.token) : Promise.resolve(null),
-      ]);
-      setPlaces(publicPlaces);
-      setMyPlaces(ownPlaces);
-      setPendingCount(adminSummary?.pendingCount ?? 0);
-    } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : 'Não foi possível carregar os lugares.');
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [session]);
-
-  useFocusEffect(useCallback(() => { void loadPlaces(); }, [loadPlaces]));
-
-  async function removeOwnPlace(place: TouristPlace) {
-    if (!session) return;
-    setPendingDelete(null);
-    setActiveId(place.id);
-    try {
-      await deleteTouristPlace(session.token, place.id);
-      await loadPlaces(true);
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Não foi possível excluir seu envio.');
-    } finally {
-      setActiveId(null);
-    }
-  }
+  const places: TouristPlace[] = [];
+  const myPlaces: TouristPlace[] = [];
+  const pendingCount = 0;
 
   if (!session) return null;
 
@@ -141,46 +86,18 @@ export function PlacesScreen({ navigation }: ScreenProps<'Places'>) {
         contentContainerStyle={{ alignSelf: 'center', maxWidth: 720, paddingBottom: 30, width: '100%' }}
         data={places}
         keyExtractor={(place, index) => place.id || `place-${index}`}
-        refreshControl={
-          <RefreshControl
-            colors={[colors.forest]}
-            onRefresh={() => void loadPlaces(true)}
-            refreshing={isRefreshing}
-            tintColor={colors.forest}
-          />
-        }
-        renderItem={({ item }) => (
-          <PlaceCard place={item} onPress={() => navigation.navigate('PlaceDetails', { place: item })} />
-        )}
         ListEmptyComponent={
-          isLoading ? (
-            <View className="items-center px-7 py-14">
-              <ActivityIndicator color={colors.forest} />
-              <Text className="mt-4 text-center font-semibold text-primary">Procurando cantos de Magé...</Text>
-            </View>
-          ) : error ? (
-            <View className="px-5 py-6">
-              <Alert icon={RefreshCw} variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-              <Button className="mt-4 self-start" onPress={() => void loadPlaces()} variant="outline">
-                <RefreshCw color={colors.forest} size={16} />
-                <Text>Tentar novamente</Text>
-              </Button>
-            </View>
-          ) : (
-            <View className="mx-5 mt-1 overflow-hidden rounded-[28px] bg-primary px-6 py-8">
-              <Compass color={colors.leaf} size={30} strokeWidth={1.5} />
-              <Text className="mt-4 text-2xl font-extrabold text-primary-foreground">O mapa ainda está começando.</Text>
-              <Text className="mt-2 leading-6 text-primary-foreground/75">
-                Seja a primeira pessoa a registrar um lugar especial para conhecer em Magé.
-              </Text>
-              <Button className="mt-6 self-start" onPress={() => navigation.navigate('CreatePlace')} variant="secondary">
-                <Plus color={colors.forest} size={17} />
-                <Text>Cadastrar primeiro lugar</Text>
-              </Button>
-            </View>
-          )
+          <View className="mx-5 mt-1 overflow-hidden rounded-[28px] bg-primary px-6 py-8">
+            <Compass color={colors.leaf} size={30} strokeWidth={1.5} />
+            <Text className="mt-4 text-2xl font-extrabold text-primary-foreground">O mapa ainda está começando.</Text>
+            <Text className="mt-2 leading-6 text-primary-foreground/75">
+              Seja a primeira pessoa a registrar um lugar especial para conhecer em Magé.
+            </Text>
+            <Button className="mt-6 self-start" onPress={() => navigation.navigate('CreatePlace')} variant="secondary">
+              <Plus color={colors.forest} size={17} />
+              <Text>Cadastrar primeiro lugar</Text>
+            </Button>
+          </View>
         }
         ListHeaderComponent={
           <View className="px-5 pb-7 pt-4">
@@ -200,7 +117,7 @@ export function PlacesScreen({ navigation }: ScreenProps<'Places'>) {
 
             {session.role === 'admin' && pendingCount > 0 ? (
               <View className="mt-4">
-                <ModerationBanner onPress={() => navigation.navigate('Admin')} pendingCount={pendingCount} />
+                <Text className="text-sm font-bold text-primary">Pendências</Text>
               </View>
             ) : null}
 
@@ -238,56 +155,22 @@ export function PlacesScreen({ navigation }: ScreenProps<'Places'>) {
                 <Text className="text-2xl font-extrabold tracking-tight">Lugares para conhecer</Text>
                 <Text className="mt-1 text-sm text-muted-foreground">Escolha um destino para começar.</Text>
               </View>
-              <Button accessibilityLabel="Atualizar lugares" onPress={() => void loadPlaces(true)} size="icon" variant="ghost">
+              <Button accessibilityLabel="Atualizar lugares" size="icon" variant="ghost">
                 <RefreshCw color={colors.forest} size={18} />
               </Button>
             </View>
           </View>
         }
-        ListFooterComponent={
-          session.role === 'admin' ? null : (
-            <MySubmissions
-              activeId={activeId}
-              onDelete={(place) => setPendingDelete(place)}
-              places={myPlaces}
-            />
-          )
-        }
+        ListFooterComponent={session.role === 'admin' ? null : <MySubmissions places={myPlaces} />}
+        renderItem={({ item }) => (
+          <PlaceCard place={item} onPress={() => navigation.navigate('PlaceDetails', { place: item })} />
+        )}
       />
-
-      <Dialog open={Boolean(pendingDelete)} onOpenChange={(open) => !open && setPendingDelete(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Excluir seu envio?</DialogTitle>
-            <DialogDescription>
-              Excluir “{pendingDelete?.name}”? Essa ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onPress={() => setPendingDelete(null)} variant="outline">
-              <Text>Cancelar</Text>
-            </Button>
-            <Button disabled={!pendingDelete || Boolean(activeId)} onPress={() => pendingDelete && void removeOwnPlace(pendingDelete)} variant="destructive">
-              <Text>Excluir evento</Text>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </SafeAreaView>
   );
 }
 
-const submissionStatusLabel: Record<PlaceStatus, string> = {
-  APPROVED: 'Publicado',
-  PENDING: 'Em análise',
-  REJECTED: 'Não aprovado',
-};
-
-function MySubmissions({ activeId, onDelete, places }: {
-  activeId: string | null;
-  onDelete(place: TouristPlace): void;
-  places: TouristPlace[];
-}) {
+function MySubmissions({ places }: { places: TouristPlace[] }) {
   if (!places.length) return null;
 
   return (
@@ -298,26 +181,6 @@ function MySubmissions({ activeId, onDelete, places }: {
           <Text className="mt-1 text-sm text-muted-foreground">Acompanhe o que você compartilhou com o guia.</Text>
         </View>
         <Badge variant="outline"><Text>{places.length}</Text></Badge>
-      </View>
-
-      <View className="mt-4 gap-3">
-        {places.map((place) => (
-          <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3" key={place.id}>
-            <View className="flex-1">
-              <Text className="font-extrabold" numberOfLines={1}>{place.name}</Text>
-              <Text className="mt-1 text-xs text-muted-foreground">{submissionStatusLabel[place.status]}</Text>
-            </View>
-            <Button
-              accessibilityLabel={`Excluir envio ${place.name}`}
-              disabled={Boolean(activeId)}
-              onPress={() => onDelete(place)}
-              size="sm"
-              variant="link"
-            >
-              <Text>Excluir</Text>
-            </Button>
-          </View>
-        ))}
       </View>
     </View>
   );
