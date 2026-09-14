@@ -3,7 +3,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { colors } from "../theme";
 import type { RootStackParamList } from "../types";
 import { AdminScreen } from "../screens/AdminScreen";
-import { CreatePlaceScreen } from "../screens/CreateEventScreen";
 import { PlaceDetailsScreen } from "../screens/EventDetailsScreen";
 import { PlacesScreen } from "../screens/EventsScreen";
 import { LoginAdminScreen } from "../screens/LoginAdmin";
@@ -48,11 +47,6 @@ export function AppNavigator() {
           name="PlaceDetails"
           component={PlaceDetailsScreen}
           options={{ title: "Detalhes do lugar" }}
-        />
-        <Stack.Screen
-          name="CreatePlace"
-          component={CreatePlaceScreen}
-          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Admin"
