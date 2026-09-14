@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { FlatList, Image, View } from "react-native";
+import { FlatList, Image, ScrollView, View } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Badge } from "@/components/ui/badge";
@@ -283,7 +283,7 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("content", content);
-      formData.append("colaborators", collaborators);
+      formData.append("collaborators", collaborators);
       formData.append("time", normalizedTime);
 
       if (selectedImage) {
@@ -423,15 +423,20 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
         }}
       >
         {selectedPlace ? (
-          <DialogContent className="max-w-[440px]">
-            <DialogHeader>
-              <DialogTitle>{selectedPlace.name}</DialogTitle>
-              <DialogDescription>
-                Detalhes do evento cadastrado.
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent className="h-[72%] max-w-[440px] gap-0 p-0">
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="gap-4 p-6 pb-4"
+              showsVerticalScrollIndicator={false}
+            >
+              <DialogHeader>
+                <DialogTitle>{selectedPlace.name}</DialogTitle>
+                <DialogDescription>
+                  Detalhes do evento cadastrado.
+                </DialogDescription>
+              </DialogHeader>
 
-            <View className="gap-4">
+              <View className="gap-4">
               <Image
                 source={{
                   uri: selectedPlace.imageUrl || defaultEventImage,
@@ -465,9 +470,10 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
                 </Text>
                 <Text>{selectedPlace.responsibleParty}</Text>
               </View>
-            </View>
+              </View>
 
-            <DialogFooter className="mt-2 flex-row justify-end">
+            </ScrollView>
+            <DialogFooter className="flex-row justify-end border-t border-border px-6 py-3">
               <DialogClose asChild>
                 <Button>
                   <Text>Fechar</Text>
@@ -490,13 +496,19 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
             </Button>
           </DialogTrigger>
 
-          <DialogContent className="max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle>Criar evento</DialogTitle>
-              <DialogDescription>
-                Preencha os dados do próximo evento da cidade.
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent className="h-[88%] max-w-[420px] gap-0 p-0">
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="gap-4 p-6 pb-4"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <DialogHeader>
+                <DialogTitle>Criar evento</DialogTitle>
+                <DialogDescription>
+                  Preencha os dados do próximo evento da cidade.
+                </DialogDescription>
+              </DialogHeader>
 
             {errorState ? (
               <View className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
@@ -605,7 +617,8 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
               </View>
             </View>
 
-            <DialogFooter className="mt-2 flex-row justify-end">
+            </ScrollView>
+            <DialogFooter className="flex-row justify-end border-t border-border px-6 py-3">
               <DialogClose asChild>
                 <Button variant="outline" disabled={isSubmitting}>
                   <Text>Cancelar</Text>

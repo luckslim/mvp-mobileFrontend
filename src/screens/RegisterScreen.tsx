@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,7 +10,6 @@ import {
   ScrollView,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,8 +33,15 @@ const bodyValidationSchema = z
 type BodyValidationSchema = z.infer<typeof bodyValidationSchema>;
 
 export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
+  const scrollViewRef = useRef<ScrollView>(null);
   const [errorState, SetErrorState] = useState<string | null>(null);
   const [messageState, SetMessageState] = useState<string | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   const {
     register,
@@ -90,6 +97,7 @@ export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
 
       SetMessageState("Registrado com sucesso!");
       SetErrorState(null);
+      navigation.replace("Login", { role: "user" });
     } catch (error) {
       console.log("ERRO:", error);
 
@@ -99,15 +107,16 @@ export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
 
   return (
     <View className="flex-1 bg-background">
-      <SafeAreaView className="flex-1">
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-          className="flex-1"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        className="flex-1"
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          contentContainerClassName="grow mx-auto w-full max-w-[520px] px-6 pb-10"
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <ScrollView
-            contentContainerClassName="mx-auto w-full max-w-[520px] px-6 pb-10"
-            keyboardShouldPersistTaps="handled"
-          >
             <Text className="mt-5 text-base font-bold text-primary">
               Magé Verde
             </Text>
@@ -247,8 +256,7 @@ export function RegisterScreen({ navigation }: ScreenProps<"Register">) {
               <Text>Já tenho uma conta</Text>
             </Button>
           </ScrollView>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

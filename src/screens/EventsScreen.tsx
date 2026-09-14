@@ -192,7 +192,7 @@ export function PlacesScreen({ navigation }: ScreenProps<"Places">) {
           ) : null
         }
         ListHeaderComponent={
-          <View className="px-5 pb-7 pt-4">
+          <View className="pb-7 pt-4">
             <View className="flex-row items-center gap-3">
               <View className="h-11 w-11 items-center justify-center rounded-2xl bg-secondary">
                 <Compass color={colors.forest} size={23} strokeWidth={2.2} />

@@ -34,7 +34,7 @@ const bannerImages = {
 
 export function ProjectShowcase() {
   return (
-    <View className="w-full px-5 pb-8 pt-6">
+    <View className="w-full pb-8 pt-6">
       <View className="overflow-hidden rounded-[30px] border border-[#dfe9dc] bg-[#eef4ec] shadow-sm shadow-black/5">
         <Image
           source={{ uri: bannerImages.cover }}
