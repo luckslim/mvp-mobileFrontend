@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -35,44 +35,42 @@ const bodyValidationSchema = z.object({
 
 type BodyValidationSchema = z.infer<typeof bodyValidationSchema>;
 
-const examplePlaces: TouristPlace[] = [
-  {
-    id: "example-1",
-    registrantId: "demo",
-    name: "Mirante do Vale",
-    description:
-      "Ponto com vista ampla e boa estrutura para receber visitantes e fotos.",
-    suggestedVisitTime: "1 hora",
-    location: "Magé",
-    responsibleParty: "Exemplo",
-    imageUrl: "",
-    status: "PENDING",
-  },
-  {
-    id: "example-2",
-    registrantId: "demo",
-    name: "Cachoeira do Bosque",
-    description:
-      "Local de valor ambiental com trilha curta e paisagem tranquila.",
-    suggestedVisitTime: "2 horas",
-    location: "Bosque da Cidade",
-    responsibleParty: "Exemplo",
-    imageUrl: "",
-    status: "PENDING",
-  },
-  {
-    id: "example-3",
-    registrantId: "demo",
-    name: "Praça das Artes",
-    description:
-      "Espaço cultural com convivência, eventos locais e boa circulação de pessoas.",
-    suggestedVisitTime: "45 minutos",
-    location: "Centro",
-    responsibleParty: "Exemplo",
-    imageUrl: "",
-    status: "PENDING",
-  },
-];
+type ApiEventItem = {
+  _id?: { value?: string | null } | null;
+  props?: {
+    authorId?: string | null;
+    title?: string | null;
+    content?: string | null;
+    collaborators?: string | null;
+    fileUrl?: string | null;
+    time?: string | null;
+    location?: string | null;
+  } | null;
+};
+
+const defaultEventImage =
+  "https://placehold.co/600x400/edf6ee/1f4d3d?text=Mag%C3%A9+Verde";
+
+function normalizeApiEvent(item: ApiEventItem): TouristPlace | null {
+  const props = item?.props ?? {};
+  const title = props.title?.trim();
+
+  if (!title && !props.content) {
+    return null;
+  }
+
+  return {
+    id: item?._id?.value ?? props.authorId ?? `event-${Date.now()}`,
+    registrantId: props.authorId ?? "unknown",
+    name: title || "Evento sem título",
+    description: props.content || "Sem descrição disponível.",
+    suggestedVisitTime: props.time || "A confirmar",
+    location: props.location || "Magé",
+    responsibleParty: props.collaborators || "Responsável não informado",
+    imageUrl: props.fileUrl || defaultEventImage,
+    status: "APPROVED",
+  };
+}
 
 export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
   const insets = useSafeAreaInsets();
@@ -82,6 +80,114 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<TouristPlace | null>(null);
+  const [events, setEvents] = useState<TouristPlace[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+
+  async function fetchEvents() {
+    try {
+      setIsLoadingEvents(true);
+
+      const response = await fetch(
+        "https://mvp-mageverde.onrender.com/get/events",
+        {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Não foi possível carregar os eventos.");
+      }
+
+      const payload = (await response.json()) as { event?: ApiEventItem[] };
+      const nextEvents = (payload.event ?? [])
+        .map(normalizeApiEvent)
+        .filter((event): event is TouristPlace => event !== null);
+
+      setEvents(nextEvents);
+      SetErrorState(null);
+    } catch (error) {
+      console.log("Erro ao carregar eventos:", error);
+      SetErrorState("Não foi possível carregar os eventos no momento.");
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  }
+
+  useEffect(() => {
+    void fetchEvents();
+
+    const intervalId = setInterval(() => {
+      void fetchEvents();
+    }, 15000);
+
+    return () => clearInterval(intervalId);
+  }, [token]);
+
+  async function handleDeleteEvent(eventId: string) {
+    try {
+      SetErrorState(null);
+      SetMessageState(null);
+
+      if (!token) {
+        SetErrorState("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const response = await fetch(
+        "https://mvp-mageverde.onrender.com/delete/event",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ eventId }),
+        },
+      );
+
+      const rawBody = await response.text();
+      let payload: Record<string, unknown> | null = null;
+
+      try {
+        payload = rawBody
+          ? (JSON.parse(rawBody) as Record<string, unknown>)
+          : null;
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok) {
+        const message =
+          (typeof payload?.message === "string"
+            ? payload.message
+            : undefined) ??
+          (typeof payload?.error === "string" ? payload.error : undefined) ??
+          "Não foi possível excluir o evento no momento.";
+
+        SetErrorState(message);
+        return;
+      }
+
+      setEvents((currentEvents) =>
+        currentEvents.filter((event) => event.id !== eventId),
+      );
+
+      if (selectedPlace?.id === eventId) {
+        setSelectedPlace(null);
+      }
+
+      SetMessageState(
+        (typeof payload?.message === "string" ? payload.message : undefined) ??
+          "Evento removido com sucesso!",
+      );
+
+      await fetchEvents();
+    } catch (error) {
+      console.log("Erro ao deletar evento:", error);
+      SetErrorState("Não foi possível excluir o evento no momento.");
+    }
+  }
 
   async function handleLogout() {
     await signOut();
@@ -204,14 +310,16 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
 
       console.log(selectedImage);
 
-
-      const response = await fetch("https://mvp-mageverde.onrender.com/create/event", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const response = await fetch(
+        "https://mvp-mageverde.onrender.com/create/event",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         },
-        body: formData,
-      });
+      );
 
       const rawBody = await response.text();
       let payload: Record<string, unknown> | null = null;
@@ -245,6 +353,7 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
       SetMessageState(successMessage);
       setIsCreateDialogOpen(false);
       resetForm();
+      await fetchEvents();
     } catch (error) {
       console.log("Erro ao criar evento:", error);
       SetErrorState("Não foi possível criar o evento no momento.");
@@ -255,7 +364,7 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
     <View className="flex-1 bg-background">
       <FlatList
         contentContainerClassName="mx-auto w-full max-w-[720px] px-5 pb-28"
-        data={examplePlaces}
+        data={events}
         keyExtractor={(place) => place.id}
         ListHeaderComponent={
           <View className="pb-5 pt-5">
@@ -277,12 +386,30 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
             <Text className="mt-2 leading-6 text-muted-foreground">
               Revise e escolha o que deve entrar no guia de Magé.
             </Text>
+            <View className="mt-4 flex-row items-center justify-between rounded-xl border border-border bg-card px-3 py-2">
+              <Text className="text-sm font-medium text-muted-foreground">
+                {isLoadingEvents ? "Atualizando..." : "Eventos Disponíveis"}
+              </Text>
+              <Badge variant="secondary">
+                <Text>{events.length}</Text>
+              </Badge>
+            </View>
           </View>
+        }
+        ListEmptyComponent={
+          !isLoadingEvents ? (
+            <View className="rounded-xl border border-dashed border-border bg-card p-5">
+              <Text className="text-center text-muted-foreground">
+                Nenhum evento encontrado no momento.
+              </Text>
+            </View>
+          ) : null
         }
         renderItem={({ item }) => (
           <AdminPlaceCard
             place={item}
             onPressDetails={() => setSelectedPlace(item)}
+            onDelete={() => void handleDeleteEvent(item.id)}
           />
         )}
       />
@@ -307,9 +434,7 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
             <View className="gap-4">
               <Image
                 source={{
-                  uri:
-                    selectedPlace.imageUrl ||
-                    "https://placehold.co/600x400/edf6ee/1f4d3d?text=Mag%C3%A9+Verde",
+                  uri: selectedPlace.imageUrl || defaultEventImage,
                 }}
                 className="h-40 w-full rounded-xl bg-border"
                 resizeMode="cover"
@@ -317,7 +442,7 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
 
               <View className="gap-2">
                 <Text className="text-sm font-bold text-primary">Local</Text>
-                <Text>{selectedPlace.location}</Text>
+                <Text>{selectedPlace.location || "Magé"}</Text>
               </View>
 
               <View className="gap-2">
@@ -330,15 +455,13 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
               </View>
 
               <View className="gap-2">
-                <Text className="text-sm font-bold text-primary">
-                  Tempo sugerido
-                </Text>
+                <Text className="text-sm font-bold text-primary">Horário</Text>
                 <Text>{selectedPlace.suggestedVisitTime}</Text>
               </View>
 
               <View className="gap-2">
                 <Text className="text-sm font-bold text-primary">
-                  Responsável
+                  Colaboradores
                 </Text>
                 <Text>{selectedPlace.responsibleParty}</Text>
               </View>
@@ -505,9 +628,11 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
 function AdminPlaceCard({
   place,
   onPressDetails,
+  onDelete,
 }: {
   place: TouristPlace;
   onPressDetails: () => void;
+  onDelete: () => void;
 }) {
   return (
     <Card className="mb-4 overflow-hidden py-0">
@@ -534,7 +659,7 @@ function AdminPlaceCard({
           <Button className="flex-1" variant="outline" onPress={onPressDetails}>
             <Text>Detalhes</Text>
           </Button>
-          <Button className="flex-1" variant="destructive">
+          <Button className="flex-1" variant="destructive" onPress={onDelete}>
             <Text>Deletar</Text>
           </Button>
         </View>
