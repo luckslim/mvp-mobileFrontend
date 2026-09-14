@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -34,10 +35,17 @@ type LoginProps = ScreenProps<"Login">;
 
 export function LoginScreen({ navigation }: LoginProps) {
   const role: UserRole = "user";
+  const scrollViewRef = useRef<ScrollView>(null);
   const [errorState, SetErrorState] = useState<string | null>(null);
   const [messageState, SetMessageState] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const { signIn } = useAuth();
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, []),
+  );
 
   const {
     register,
@@ -122,18 +130,19 @@ export function LoginScreen({ navigation }: LoginProps) {
 
   return (
     <View className="flex-1 bg-background">
-      <StatusBar barStyle="light-content" backgroundColor={colors.forest} />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
       <SafeAreaView className="flex-1">
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           className="flex-1"
         >
           <ScrollView
+            ref={scrollViewRef}
             contentContainerClassName="grow pb-6"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View className="relative min-h-[332px] overflow-hidden bg-primary px-6 pb-[70px] pt-6">
+            <View className="relative min-h-[300px] overflow-hidden bg-primary px-6 pb-[50px] pt-6">
               <View className="absolute -right-[112px] -top-[104px] h-[276px] w-[276px] rounded-full border border-secondary/20" />
               <View className="absolute -right-[52px] -top-[44px] h-[156px] w-[156px] rounded-full bg-primary-foreground/5" />
               <View className="absolute -bottom-16 right-8 h-36 w-36 rounded-full border border-secondary/10" />
@@ -155,11 +164,11 @@ export function LoginScreen({ navigation }: LoginProps) {
                 </View>
               </View>
 
-              <View className="mt-9">
+              <View className="mt-7">
                 <Text className="text-sm font-semibold text-secondary">
                   Descubra Magé
                 </Text>
-                <Text className="mt-2 max-w-[370px] text-4xl font-extrabold leading-10 tracking-tight text-primary-foreground">
+                <Text className="mt-2 max-w-[370px] text-[34px] font-extrabold leading-9 tracking-tight text-primary-foreground">
                   Conheça os lugares que fazem Magé especial.
                 </Text>
                 <Text className="mt-4 max-w-[370px] text-base leading-6 text-primary-foreground/75">
