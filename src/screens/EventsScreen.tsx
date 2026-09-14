@@ -9,6 +9,7 @@ import { useAuth } from "../auth/AuthContext";
 import { colors } from "../theme";
 import type { TouristPlace } from "../types";
 import type { ScreenProps } from "../navigation/types";
+import { ProjectShowcase } from "../utils/components/projectShow";
 
 const defaultEventImage =
   "https://placehold.co/600x400/edf6ee/1f4d3d?text=Mag%C3%A9+Verde";
@@ -210,7 +211,7 @@ export function PlacesScreen({ navigation }: ScreenProps<"Places">) {
                 <Text>Sair</Text>
               </Button>
             </View>
-
+            <ProjectShowcase/>
             <View className="mt-4 flex-row gap-3">
               <View className="flex-1 rounded-2xl border border-border bg-card px-4 py-4">
                 <Text className="text-2xl font-extrabold text-primary">

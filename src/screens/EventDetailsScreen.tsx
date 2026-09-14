@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ui/text";
 import type { ScreenProps } from "../navigation/types";
+import { CommentList } from "../utils/components/chat";
 
 export function PlaceDetailsScreen({ route }: ScreenProps<"PlaceDetails">) {
   const { place } = route.params;
@@ -65,6 +66,7 @@ export function PlaceDetailsScreen({ route }: ScreenProps<"PlaceDetails">) {
           </Text>
         </CardContent>
       </Card>
+      <CommentList/>
     </ScrollView>
   );
 }
