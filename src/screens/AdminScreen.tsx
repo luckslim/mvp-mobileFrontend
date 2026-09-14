@@ -76,7 +76,7 @@ const examplePlaces: TouristPlace[] = [
 
 export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, token } = useAuth();
   const [errorState, SetErrorState] = useState<string | null>(null);
   const [messageState, SetMessageState] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -129,6 +129,23 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
     }
   }
 
+  function normalizeTimeValue(value: string) {
+    const cleanValue = value.trim().toLowerCase().replace(/\s+/g, "");
+
+    if (/^\d{1,2}h$/i.test(cleanValue)) {
+      const hour = cleanValue.replace("h", "");
+      return `${hour.padStart(2, "0")}:00`;
+    }
+
+    if (/^\d{1,2}h\d{2}$/i.test(cleanValue)) {
+      const hour = cleanValue.replace(/h\d{2}$/, "");
+      const minutes = cleanValue.slice(-2);
+      return `${hour.padStart(2, "0")}:${minutes}`;
+    }
+
+    return value.trim();
+  }
+
   function resetForm() {
     setSelectedImage(null);
     reset({
@@ -150,7 +167,34 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
       SetErrorState(null);
       SetMessageState(null);
 
-      console.log("Criando evento:", {
+      if (!token) {
+        SetErrorState("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const normalizedTime = normalizeTimeValue(time);
+
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("content", content);
+      formData.append("colaborators", collaborators);
+      formData.append("time", normalizedTime);
+
+      if (selectedImage) {
+        const imageName = selectedImage.split("/").pop() ?? "event-image.jpg";
+
+        const localImageResponse = await fetch(selectedImage);
+        const imageBlob = await localImageResponse.blob();
+
+        formData.append("file", imageBlob, imageName);
+        console.log("IMAGE:", {
+          uri: selectedImage,
+          blobType: imageBlob.type,
+          blobSize: imageBlob.size,
+        });
+      }
+
+      console.log("Enviando evento para a API:", {
         title,
         content,
         collaborators,
@@ -158,10 +202,51 @@ export function AdminScreen({ navigation }: ScreenProps<"Admin">) {
         image: selectedImage,
       });
 
-      SetMessageState("Evento criado com sucesso!");
+      console.log(selectedImage);
+
+
+      const response = await fetch("https://mvp-mageverde.onrender.com/create/event", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const rawBody = await response.text();
+      let payload: Record<string, unknown> | null = null;
+
+      try {
+        payload = rawBody
+          ? (JSON.parse(rawBody) as Record<string, unknown>)
+          : null;
+      } catch {
+        payload = null;
+      }
+
+      console.log("Resposta da API:", payload ?? rawBody);
+
+      if (!response.ok) {
+        const message =
+          (typeof payload?.message === "string"
+            ? payload.message
+            : undefined) ??
+          (typeof payload?.error === "string" ? payload.error : undefined) ??
+          "Não foi possível criar o evento no momento.";
+
+        SetErrorState(message);
+        return;
+      }
+
+      const successMessage =
+        (typeof payload?.message === "string" ? payload.message : undefined) ??
+        "Evento criado com sucesso!";
+
+      SetMessageState(successMessage);
       setIsCreateDialogOpen(false);
       resetForm();
-    } catch {
+    } catch (error) {
+      console.log("Erro ao criar evento:", error);
       SetErrorState("Não foi possível criar o evento no momento.");
     }
   }
