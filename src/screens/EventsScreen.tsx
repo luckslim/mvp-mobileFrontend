@@ -61,8 +61,11 @@ function PlaceCard({
     <Pressable
       accessibilityLabel={`Abrir lugar ${place.name}`}
       onPress={onPress}
-      className="mx-5 mb-5 w-full overflow-hidden rounded-[28px] border border-border bg-card shadow-none"
+      className="mb-5 overflow-hidden rounded-[28px] border border-border bg-card shadow-none"
       style={{
+        width: "100%",
+        maxWidth: 680,
+        alignSelf: "center",
         flexDirection: "column",
         alignItems: "stretch",
         justifyContent: "flex-start",
@@ -165,7 +168,7 @@ export function PlacesScreen({ navigation }: ScreenProps<"Places">) {
 
     return () => clearInterval(intervalId);
   }, [token]);
-
+  
   return (
     <SafeAreaView className="flex-1 bg-background">
       <StatusBar barStyle="dark-content" backgroundColor={colors.paper} />
@@ -173,6 +176,7 @@ export function PlacesScreen({ navigation }: ScreenProps<"Places">) {
         contentContainerStyle={{
           alignSelf: "center",
           maxWidth: 720,
+          paddingHorizontal: 20,
           paddingBottom: 30,
           width: "100%",
         }}
@@ -211,7 +215,7 @@ export function PlacesScreen({ navigation }: ScreenProps<"Places">) {
                 <Text>Sair</Text>
               </Button>
             </View>
-            <ProjectShowcase/>
+            <ProjectShowcase />
             <View className="mt-4 flex-row gap-3">
               <View className="flex-1 rounded-2xl border border-border bg-card px-4 py-4">
                 <Text className="text-2xl font-extrabold text-primary">
